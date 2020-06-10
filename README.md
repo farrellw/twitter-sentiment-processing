@@ -5,24 +5,58 @@ A Spark 2.4.5, written in Scala and setup using Maven.
 
 The structured streaming app requires a Kafka cluster. The data on the topic is raw twitter data.
 
-TODO replace below with twitter schema
 ```json
 {
-  "marketplace": "US",
-  "customer_id": 1,
-  "review_id": "R26ZK6XLDT8DDS",
-  "product_id": "B000L70MQO",
-  "product_parent": 216773674,
-  "product_title": "Product 1",
-  "product_category": "Toys",
-  "star_rating": 5,
-  "helpful_votes": 1,
-  "total_votes": 4,
-  "vine": "N",
-  "verified_purchase": "Y",
-  "review_headline": "Five Stars",
-  "review_body": "Cool.",
-  "review_date": "2015-01-12T00:00:00.000-06:00"
+  "created_at":"Wed Jun 10 15:59:26 +0000 2020",
+  "id":1270747409170268161,
+  "id_str":"1270747409170268161",
+  "text":"@StateDept @realDonaldTrump Does the executive order make it legal to tear gas peaceful protesters to have a photo op at any church?",
+  "user":
+  {
+    "id":790650278,
+    "id_str":"790650278",
+    "name":"Amaechi Nwakuche",
+    "screen_name":"AmaechiNwakuche",
+    "location":"Raleigh, NC",
+    "url":"http:\/\/www.afri-logistics-llc.com",
+    "description":"A Chartered Engineer and a certified Project Manager of the Association of Project Managers in the UK. He has over Seventeen and Half years of engineering exp.",
+  },
+  "geo":
+    {
+      "type":"Point",
+      "coordinates": [41.5,-100.0]
+    },
+  "coordinates":
+    {
+      "type":"Point",
+      "coordinates":[-100.0,41.5]
+    },
+  "place":
+    {
+      "id":"161d2f18e3a0445a",
+      "url":"https:\/\/api.twitter.com\/1.1\/geo\/id\/161d2f18e3a0445a.json",
+      "place_type":"city",
+      "name":"Raleigh",
+      "full_name":"Raleigh, NC",
+      "country_code":"US",
+      "country":"United States",
+      "bounding_box":
+        {
+          "type":"Polygon",
+           "coordinates":
+           [
+             [
+               [-78.818343,35.715805],
+               [-78.818343,35.972158],
+               [-78.497331,35.972158],
+               [-78.497331,35.715805]
+             ]
+           ]
+        },
+      "attributes":{}
+    },
+  "lang":"en",
+  "timestamp_ms":"1591804766348"
 }
 ```
 
