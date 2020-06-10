@@ -1,9 +1,9 @@
-# Twitter Processing
+# Sentiment Twitter Processing
 A Spark 2.4.5, written in Scala and setup using Maven.
 
 # Running the Structured Streaming App
 
-The structured streaming app requires a Kafka cluster. The data on the topic is twitter data, formatted to be simple feature types by the Geomesa kafka producer.
+The structured streaming app requires a Kafka cluster. The data on the topic is raw twitter data.
 
 TODO replace below with twitter schema
 ```json
