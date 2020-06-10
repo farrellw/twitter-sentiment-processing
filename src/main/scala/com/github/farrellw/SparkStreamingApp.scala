@@ -1,8 +1,8 @@
-package com.github.labs1904
+package com.github.farrellw
 
 import java.util.Properties
 
-import com.github.labs1904.models.{EnrichedTweet, Tweet}
+import com.github.farrellw.models.{EnrichedTweet, Tweet}
 import org.apache.log4j.Logger
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.streaming.{OutputMode, Trigger}
@@ -28,7 +28,7 @@ object SparkStreamingApp {
   def main(args: Array[String]): Unit = {
       try {
         val spark = SparkSession.builder().appName(jobName).master("local[*]").getOrCreate()
-        val bootstrapServers = "http://ec2-54-175-45-152.compute-1.amazonaws.com:9092"
+        val bootstrapServers = args(0)
 
         val df = spark
           .readStream
