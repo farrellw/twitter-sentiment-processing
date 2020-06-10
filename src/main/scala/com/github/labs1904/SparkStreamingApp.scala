@@ -1,65 +1,80 @@
 package com.github.labs1904
 
-import com.github.labs1904.models.WrappedReview
-import org.apache.hadoop.hbase.util.Bytes
+import java.util.Properties
+
+import com.github.labs1904.models.{EnrichedTweet, Tweet}
 import org.apache.log4j.Logger
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.streaming.{OutputMode, Trigger}
-import org.apache.spark.sql.types.{IntegerType, StringType, StructType, TimestampType}
+import org.apache.spark.sql.types.{StringType, StructType}
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import edu.stanford.nlp.pipeline.StanfordCoreNLP
+import edu.stanford.nlp.sentiment.SentimentCoreAnnotations
+import edu.stanford.nlp.ling.CoreAnnotations
 
 /**
  * Spark Structured Streaming app
- *
- * Takes one argument, for Kafka bootstrap servers (ex: localhost:9092)
  */
 object SparkStreamingApp {
   lazy val logger: Logger = Logger.getLogger(this.getClass)
-  implicit def stringToBytes(str: String): Array[Byte] = Bytes.toBytes(str)
-  implicit def bytesToString(bytes: Array[Byte]): String = Bytes.toString(bytes)
 
-  val jobName = "SparkStreamingApp"
+  val jobName = "Twitter Processing Application"
+
+  //  TODO add more things from the schema
   val schema: StructType = new StructType()
-    .add("marketplace", StringType, nullable = true)
-    .add("customer_id", IntegerType, nullable = true)
-    .add("review_id", StringType, nullable = true)
-    .add("product_id", StringType, nullable = true)
-    .add("product_parent", IntegerType, nullable = true)
-    .add("product_title", StringType, nullable = true)
-    .add("product_category", StringType, nullable = true)
-    .add("star_rating", IntegerType, nullable = true)
-    .add("helpful_votes", IntegerType, nullable = true)
-    .add("total_votes", IntegerType, nullable = true)
-    .add("vine", StringType, nullable = true)
-    .add("verified_purchase", StringType, nullable = true)
-    .add("review_headline", StringType, nullable = true)
-    .add("review_body", StringType, nullable = true)
-    .add("review_date", TimestampType, nullable = true)
+    .add("text", StringType, nullable = true)
+    .add("id", StringType, nullable = true)
 
   def main(args: Array[String]): Unit = {
-    try {
       try {
         val spark = SparkSession.builder().appName(jobName).master("local[*]").getOrCreate()
-        val bootstrapServers = "107.178.221.42:9092,35.225.13.175:9092,35.192.67.106:9092"
+        val bootstrapServers = "http://ec2-54-175-45-152.compute-1.amazonaws.com:9092"
+
         val df = spark
           .readStream
           .format("kafka")
           .option("kafka.bootstrap.servers", bootstrapServers)
-          .option("subscribe", "reviews")
+          .option("subscribe", "raw-tweets")
           .option("startingOffsets", "earliest")
           .option("maxOffsetsPerTrigger", "200")
           .load()
           .selectExpr("CAST(value AS STRING)")
 
-        val out = compute(df)
-
-        out.printSchema()
         import spark.implicits._
-        val structured = out.as[WrappedReview].map(_.js)
+        val structured = compute(df).as[Tweet]
 
-        val query = structured.writeStream
+        val out = structured.mapPartitions(p => {
+          val props = new Properties()
+          props.setProperty("annotators", "tokenize ssplit pos parse sentiment")
+          props.setProperty("tokenize.options", "untokenizable=allKeep")
+
+          // TODO re-use pipeline intead of creating new every time. e.g. connection pool
+          val pipeline = new StanfordCoreNLP(props)
+
+          p.map(t => {
+            val annotation = pipeline.process(t.text)
+            val sentences = annotation.get(classOf[CoreAnnotations.SentencesAnnotation])
+
+            if(sentences.size() > 0) {
+              val first = sentences.get(0)
+
+              // TODO: Combine sentiment of entire tweet rather than sentences.
+              val sentiment = first.get(classOf[SentimentCoreAnnotations.ClassName])
+
+              EnrichedTweet(t.text, t.id, first.toString, sentiment)
+            } else {
+              EnrichedTweet(t.text, t.id, null, null)
+            }
+          })
+        }).filter(df => df.sent != null)
+
+
+        //  Write to output sink
+        //  TODO switch to HDFS
+        val query = out.writeStream
           .outputMode(OutputMode.Update())
           .format("console")
+          .option("truncate", false)
           .trigger(Trigger.ProcessingTime("5 seconds"))
           .start()
 
@@ -67,10 +82,9 @@ object SparkStreamingApp {
       } catch {
         case e: Exception => logger.error(s"$jobName error in main", e)
       }
-    }
   }
 
   def compute(df: DataFrame): DataFrame = {
-    df.select(from_json(df("value"), schema) as "js")
+    df.select(from_json(df("value"), schema) as "js").select("js.*")
   }
 }
