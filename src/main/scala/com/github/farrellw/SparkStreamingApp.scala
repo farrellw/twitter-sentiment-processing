@@ -28,6 +28,15 @@ object SparkStreamingApp {
   def main(args: Array[String]): Unit = {
       try {
         val spark = SparkSession.builder().appName(jobName).master("local[*]").getOrCreate()
+
+        // Set aws environment variables
+        spark.sparkContext
+          .hadoopConfiguration.set("fs.s3a.access.key", sys.env("ACCESS_KEY"))
+        spark.sparkContext
+          .hadoopConfiguration.set("fs.s3a.secret.key", sys.env("SECRET_KEY"))
+        spark.sparkContext
+          .hadoopConfiguration.set("fs.s3a.endpoint", "s3.amazonaws.com")
+
         val bootstrapServers = args(0)
 
         val df = spark
@@ -68,17 +77,25 @@ object SparkStreamingApp {
           })
         }).filter(df => df.sent != null)
 
-
-        //  Write to output sink
-        //  TODO switch to HDFS
         val query = out.writeStream
-          .outputMode(OutputMode.Update())
-          .format("console")
-          .option("truncate", false)
+          .outputMode(OutputMode.Append())
+          .format("json")
+          .option("path", "s3a://geospatial-project-data/will-spark-dump")
+          .option("checkpointLocation", "s3a://geospatial-project-data/will-spark-dump/tweets_checkpoint")
           .trigger(Trigger.ProcessingTime("5 seconds"))
           .start()
 
+
+        //        LEFT IN FOR DEBUGGING
+        //        val query = out.writeStream
+        //          .outputMode(OutputMode.Update())
+        //          .format("console")
+        //          .option("truncate", false)
+        //          .trigger(Trigger.ProcessingTime("5 seconds"))
+        //          .start()
+
         query.awaitTermination()
+
       } catch {
         case e: Exception => logger.error(s"$jobName error in main", e)
       }
