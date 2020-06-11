@@ -1,4 +1,4 @@
-package com.github.labs1904
+package com.github.farrellw
 
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.scalatest.FunSuite
