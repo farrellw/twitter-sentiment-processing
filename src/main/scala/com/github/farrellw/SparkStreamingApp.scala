@@ -5,12 +5,12 @@ import java.util.Properties
 import com.github.farrellw.models.{EnrichedTweet, Tweet}
 import org.apache.log4j.Logger
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.streaming.{OutputMode, Trigger}
 import org.apache.spark.sql.types.{StringType, StructType}
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import edu.stanford.nlp.pipeline.StanfordCoreNLP
 import edu.stanford.nlp.sentiment.SentimentCoreAnnotations
 import edu.stanford.nlp.ling.CoreAnnotations
+import org.apache.spark.sql.streaming.OutputMode
 
 /**
  * Spark Structured Streaming app
@@ -50,60 +50,45 @@ object SparkStreamingApp {
         .selectExpr("CAST(value AS STRING)")
 
       import spark.implicits._
-      val structured = compute(df).as[Tweet]
+      val query = df.writeStream.foreachBatch { (batchDF: DataFrame, batchId: Long) =>
+        batchDF.persist()
 
-      val out = structured.mapPartitions(p => {
-        val props = new Properties()
-        props.setProperty("annotators", "tokenize ssplit pos parse sentiment")
-        props.setProperty("tokenize.options", "untokenizable=allKeep")
+        val out = compute(batchDF).as[Tweet].mapPartitions(p => {
+          val props = new Properties()
+          props.setProperty("annotators", "tokenize ssplit pos parse sentiment")
 
-        // TODO re-use pipeline intead of creating new every time. e.g. connection pool
-        val pipeline = new StanfordCoreNLP(props)
+//          TODO fix warnings of untokenizable
+          props.setProperty("tokenize.options", "untokenizable=allKeep")
 
-        p.map(t => {
-          val annotation = pipeline.process(t.text)
-          val sentences = annotation.get(classOf[CoreAnnotations.SentencesAnnotation])
+          // TODO re-use pipeline intead of creating new every time. e.g. connection pool
+          val pipeline = new StanfordCoreNLP(props)
 
-          if (sentences.size() > 0) {
-            val first = sentences.get(0)
+          p.map(t => {
+            val annotation = pipeline.process(t.text)
+            val sentences = annotation.get(classOf[CoreAnnotations.SentencesAnnotation])
 
-            // TODO: Combine sentiment of entire tweet rather than sentences.
-            val sentiment = first.get(classOf[SentimentCoreAnnotations.ClassName])
+            if (sentences.size() > 0) {
+              val first = sentences.get(0)
 
-            EnrichedTweet(t.text, t.id, first.toString, sentiment)
-          } else {
-            EnrichedTweet(t.text, t.id, null, null)
-          }
-        })
-      }).filter(df => df.sent != null)
+              // TODO: Combine sentiment of entire tweet rather than sentences.
+              val sentiment = first.get(classOf[SentimentCoreAnnotations.ClassName])
 
-      val rawQuery = df.writeStream
-        .outputMode(OutputMode.Append())
-        .format("json")
-        .option("path", "s3a://geospatial-project-data/will-spark-dump/raw/tweets")
-        .option("checkpointLocation", "s3a://geospatial-project-data/will-spark-dump/raw/tweets_checkpoint")
-        .trigger(Trigger.ProcessingTime("5 seconds"))
-        .start()
+              EnrichedTweet(t.text, t.id, first.toString, sentiment)
+            } else {
+              EnrichedTweet(t.text, t.id, null, null)
+            }
+          })
+        }).filter(df => df.sent != null)
 
-      val transformedQuery = out.writeStream
-        .outputMode(OutputMode.Append())
-        .format("json")
-        .option("path", "s3a://geospatial-project-data/will-spark-dump")
-        .option("checkpointLocation", "s3a://geospatial-project-data/will-spark-dump/tweets_checkpoint")
-        .trigger(Trigger.ProcessingTime("5 seconds"))
-        .start()
+        batchDF.write.format("json").mode(SaveMode.Append).save("s3a://geospatial-project-data/will-spark-dump/raw/tweets")
+        out.write.format("json").mode(SaveMode.Append).save("s3a://geospatial-project-data/will-spark-dump/transformed/tweets")
 
-      //        LEFT IN FOR DEBUGGING
-      //        val query = out.writeStream
-      //          .outputMode(OutputMode.Update())
-      //          .format("console")
-      //          .option("truncate", false)
-      //          .trigger(Trigger.ProcessingTime("5 seconds"))
-      //          .start()
+        batchDF.unpersist()
 
-      rawQuery.awaitTermination()
-      transformedQuery.awaitTermination()
+        println(batchId)
+      }.outputMode(OutputMode.Append()).start()
 
+      query.awaitTermination()
     } catch {
       case e: Exception => logger.error(s"$jobName error in main", e)
     }
