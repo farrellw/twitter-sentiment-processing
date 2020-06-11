@@ -20,7 +20,7 @@ object SparkStreamingApp {
 
   val jobName = "Twitter Processing Application"
 
-  //  TODO add more things from the schema
+  //  TODO complete schema
   val schema: StructType = new StructType()
     .add("text", StringType, nullable = true)
     .add("id", StringType, nullable = true)
@@ -57,7 +57,7 @@ object SparkStreamingApp {
           val props = new Properties()
           props.setProperty("annotators", "tokenize ssplit pos parse sentiment")
 
-//          TODO fix warnings of untokenizable
+          // TODO fix warnings of untokenizable
           props.setProperty("tokenize.options", "untokenizable=allKeep")
 
           // TODO re-use pipeline intead of creating new every time. e.g. connection pool
@@ -70,7 +70,7 @@ object SparkStreamingApp {
             if (sentences.size() > 0) {
               val first = sentences.get(0)
 
-              // TODO: Combine sentiment of entire tweet rather than sentences.
+              // TODO: Combine sentiment of entire tweet rather than the first sentence.
               val sentiment = first.get(classOf[SentimentCoreAnnotations.ClassName])
 
               EnrichedTweet(t.text, t.id, first.toString, sentiment)
@@ -84,7 +84,6 @@ object SparkStreamingApp {
         out.write.format("json").mode(SaveMode.Append).save("s3a://geospatial-project-data/will-spark-dump/transformed/tweets")
 
         batchDF.unpersist()
-
         println(batchId)
       }.outputMode(OutputMode.Append()).start()
 
