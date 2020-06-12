@@ -17,7 +17,7 @@ class SparkStreamingAppTests extends FunSuite with DataFrameSuiteBase {
     )).toDF("value")
 
     val expected = sc.parallelize(List(Some(3.67))).toDF("avg_star_rating")
-    val actual = SparkStreamingApp.compute(input)
+    val actual = SparkStreamingApp.parseJsonFromString(input)
     actual.printSchema()
     actual.show()
     assertDataFrameEquals(actual, expected) // equal

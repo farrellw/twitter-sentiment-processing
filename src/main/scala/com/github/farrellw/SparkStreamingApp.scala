@@ -12,8 +12,8 @@ import edu.stanford.nlp.sentiment.SentimentCoreAnnotations
 import edu.stanford.nlp.ling.CoreAnnotations
 import org.apache.spark.sql.streaming.OutputMode
 
-//TODO add tests
-//TODO unclude userschema in struct
+// TODO add tests
+// TODO include userschema in struct
 // TODO, for batchDF, don't nest it under the value argument
 // TODO: Combine sentiment of entire tweet rather than the first sentence.
 // TODO re-use pipeline intead of creating new every time. e.g. connection pool
