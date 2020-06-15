@@ -1,8 +1,8 @@
-package com.github.farrellw
+package com.github.labs1904
 
 import java.util.Properties
 
-import com.github.farrellw.models.{Tweet, TweetWithSentiment}
+import com.github.labs1904.models.{Tweet, TweetWithSentiment}
 import org.apache.log4j.Logger
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{ArrayType, BooleanType, FloatType, IntegerType, StringType, StructType}

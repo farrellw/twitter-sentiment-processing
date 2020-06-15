@@ -1,4 +1,4 @@
-package com.github.farrellw.models
+package com.github.labs1904.models
 
 
 case class Tweet(text: String, id: String, created_at: String, truncated: Option[Boolean], coordinates: Coordinates, place: Place, user: User)
