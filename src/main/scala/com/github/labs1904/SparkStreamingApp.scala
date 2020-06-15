@@ -12,11 +12,11 @@ import edu.stanford.nlp.sentiment.SentimentCoreAnnotations
 import edu.stanford.nlp.ling.CoreAnnotations
 import org.apache.spark.sql.streaming.OutputMode
 
-// TODO, for batchDF, don't nest it under the value argument
+// TODO: for batchDF, don't nest it under the value argument
 // TODO: Combine sentiment of entire tweet rather than the first sentence.
-// TODO re-use pipeline intead of creating new every time. e.g. connection pool
-// TODO fix warnings of untokenizable
-// TODO Deploy Application
+// TODO: re-use pipeline intead of creating new every time. e.g. connection pool
+// TODO: fix warnings of untokenizable
+// TODO: Deploy Application
 /**
  * Spark Structured Streaming app
  */
