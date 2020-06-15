@@ -12,12 +12,11 @@ import edu.stanford.nlp.sentiment.SentimentCoreAnnotations
 import edu.stanford.nlp.ling.CoreAnnotations
 import org.apache.spark.sql.streaming.OutputMode
 
-// TODO add tests
-// TODO include userschema in struct
 // TODO, for batchDF, don't nest it under the value argument
 // TODO: Combine sentiment of entire tweet rather than the first sentence.
 // TODO re-use pipeline intead of creating new every time. e.g. connection pool
 // TODO fix warnings of untokenizable
+// TODO Deploy Application
 /**
  * Spark Structured Streaming app
  */
@@ -37,14 +36,13 @@ object SparkStreamingApp {
     .add("verified", BooleanType, nullable = true)
     .add("followers_count", IntegerType, nullable = true)
     .add("friends_count", IntegerType, nullable = true)
-    .add("created_at", IntegerType, nullable = true)
+    .add("created_at", StringType, nullable = true)
 
   val schema: StructType = new StructType()
     .add("text", StringType, nullable = true)
     .add("id", StringType, nullable = true)
     .add("created_at", StringType, nullable = true)
     .add("truncated", BooleanType, nullable = true)
-
     .add("coordinates",
       new StructType()
         .add("coordinates", ArrayType(FloatType))
@@ -60,9 +58,9 @@ object SparkStreamingApp {
           new StructType()
             .add("type", StringType, nullable = true)
             .add("coordinates", ArrayType(ArrayType(ArrayType(FloatType)))),
-          nullable =true)
+          nullable = true)
     )
-//  //    .add("user", userSchema, nullable = true)
+    .add("user", userSchema, nullable = true)
 
   def main(args: Array[String]): Unit = {
     try {
@@ -123,9 +121,9 @@ object SparkStreamingApp {
       val first = sentences.get(0)
       val sentiment = first.get(classOf[SentimentCoreAnnotations.ClassName])
 
-      TweetWithSentiment(t.text, t.id, t.created_at, t.truncated, t.coordinates, t.place, sentiment)
+      TweetWithSentiment(t.text, t.id, t.created_at, t.truncated, t.coordinates, t.place, t.user, sentiment)
     } else {
-      TweetWithSentiment(t.text, t.id, t.created_at, t.truncated, t.coordinates, t.place, null)
+      TweetWithSentiment(t.text, t.id, t.created_at, t.truncated, t.coordinates, t.place, t.user, null)
     }
   }
 
@@ -134,10 +132,10 @@ object SparkStreamingApp {
   }
 
   def createSentimentPipeline(): StanfordCoreNLP = {
-      val props = new Properties()
-      props.setProperty("annotators", "tokenize ssplit pos parse sentiment")
-      props.setProperty("tokenize.options", "untokenizable=allKeep")
+    val props = new Properties()
+    props.setProperty("annotators", "tokenize ssplit pos parse sentiment")
+    props.setProperty("tokenize.options", "untokenizable=allKeep")
 
-      new StanfordCoreNLP(props)
+    new StanfordCoreNLP(props)
   }
 }
