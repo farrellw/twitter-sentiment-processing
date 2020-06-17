@@ -12,11 +12,11 @@ import edu.stanford.nlp.sentiment.SentimentCoreAnnotations
 import edu.stanford.nlp.ling.CoreAnnotations
 import org.apache.spark.sql.streaming.OutputMode
 
+// TODO: CICD of Dockerfile.
 // TODO: for batchDF, don't nest it under the value argument
 // TODO: Combine sentiment of entire tweet rather than the first sentence.
 // TODO: re-use pipeline intead of creating new every time. e.g. connection pool
 // TODO: fix warnings of untokenizable
-// TODO: Deploy Application
 /**
  * Spark Structured Streaming app
  */
@@ -64,7 +64,7 @@ object SparkStreamingApp {
 
   def main(args: Array[String]): Unit = {
     try {
-      val spark = SparkSession.builder().appName(JobName).master("local[*]").getOrCreate()
+      val spark = SparkSession.builder().appName(JobName).getOrCreate()
 
       // Set aws environment variables
       spark.sparkContext
@@ -74,7 +74,7 @@ object SparkStreamingApp {
       spark.sparkContext
         .hadoopConfiguration.set("fs.s3a.endpoint", "s3.amazonaws.com")
 
-      val bootstrapServers = args(0)
+      val bootstrapServers = sys.env("BOOTSTRAP_SERVER")
 
       val df = spark
         .readStream
