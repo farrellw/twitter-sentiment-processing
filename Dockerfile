@@ -1,4 +1,4 @@
-FROM 362637394601.dkr.ecr.us-east-1.amazonaws.com/spark:latest
+FROM 362637394601.dkr.ecr.us-east-1.amazonaws.com/spark-base:latest
 
 COPY twitter-processing/target/twitter-processing-1.0-SNAPSHOT.jar /opt/spark/examples/jars/
 
