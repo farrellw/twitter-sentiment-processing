@@ -1,6 +1,7 @@
 # Excluding entire .idea folder
 .idea
 
+.DS_STORE
 # Created by https://www.gitignore.io/api/maven,scala,intellij
 
 ### Intellij ###
