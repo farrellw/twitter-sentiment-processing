@@ -14,10 +14,11 @@
 
     <properties>
         <jdk.version>1.8</jdk.version>
-        <scala.compat.version>2.11</scala.compat.version> <!--// 2.11.10-->
+        <scala.compat.version>2.11</scala.compat.version>
         <scala.version>2.11.10</scala.version>
         <spark.version>2.4.5</spark.version>
         <hadoop.version>2.7.3</hadoop.version>
+        <scope.provided>compile</scope.provided>
     </properties>
 
     <build>
@@ -133,7 +134,7 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_${scala.compat.version}</artifactId>
             <version>${spark.version}</version>
-            <scope>provided</scope>
+            <scope>${scope.provided}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -217,4 +218,17 @@
 <!--            <scope>test</scope>-->
 <!--        </dependency>-->
     </dependencies>
+    <profiles>
+        <profile>
+            <id>release</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <!-- The dependencies marked with this property will NOT be included in the uber jar
+                because we assume they exist on the cluster already. -->
+                <scope.provided>provided</scope.provided>
+            </properties>
+        </profile>
+    </profiles>
 </project>
