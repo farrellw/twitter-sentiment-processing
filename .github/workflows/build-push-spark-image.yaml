@@ -2,8 +2,8 @@ name: Build, tag, and push Spark image to Amazon ECR
 
 on:
   push:
-  branches:
-    - master
+    branches:
+      - master
 
 jobs:
   setup-build-publish:
