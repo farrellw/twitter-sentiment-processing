@@ -188,7 +188,7 @@
         </dependency>
         <dependency>
             <groupId>com.github.labs1904</groupId>
-            <artifactId>ShadowJavaAwsSdk</artifactId>
+            <artifactId>shadow-java-aws-sdk</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
 
