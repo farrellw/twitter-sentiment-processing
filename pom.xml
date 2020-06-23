@@ -12,5 +12,6 @@
   <modules>
     <module>shadow-java-aws-sdk</module>
     <module>twitter-processing</module>
+    <module>data-store-generator</module>
   </modules>
 </project>
