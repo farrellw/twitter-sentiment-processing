@@ -17,7 +17,7 @@
         <scala.compat.version>2.11</scala.compat.version>
         <scala.version>2.11.10</scala.version>
         <spark.version>2.4.5</spark.version>
-        <hadoop.version>2.7.3</hadoop.version>
+        <hadoop.version>2.10.1</hadoop.version>
         <scope.provided>compile</scope.provided>
     </properties>
 
